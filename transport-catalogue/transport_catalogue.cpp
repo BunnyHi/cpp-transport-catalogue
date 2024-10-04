@@ -61,7 +61,6 @@ namespace transport {
         info_route.name = bus_route->name;
         info_route.length = GetRouteLength(*bus_route);
 
-        // Корректное создание unordered_set для подсчёта уникальных остановок по их именам
         std::unordered_set<std::string_view> unique_stops;
         for (const Stop* stop : bus_route->stops) {
             unique_stops.insert(stop->name);
