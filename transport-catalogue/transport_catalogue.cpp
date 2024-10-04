@@ -59,19 +59,20 @@ namespace transport {
     const InfoRoute TransportCatalogue::GetInfoRoute(const BusRoute* bus_route) const {
         InfoRoute info_route;
         info_route.name = bus_route->name;
-        info_route.count_unique_stops = 0;
-        info_route.length = 0;
+        info_route.length = GetRouteLength(*bus_route);
 
+        // Корректное создание unordered_set для подсчёта уникальных остановок по их именам
         std::unordered_set<std::string_view> unique_stops;
         for (const Stop* stop : bus_route->stops) {
             unique_stops.insert(stop->name);
         }
 
         info_route.count_unique_stops = static_cast<int>(unique_stops.size());
-        info_route.length = GetRouteLength(*bus_route);
 
         return info_route;
     }
+
+
 
     double TransportCatalogue::GetRouteLength(const BusRoute& bus_route) const {
         double total_length = 0.0;
