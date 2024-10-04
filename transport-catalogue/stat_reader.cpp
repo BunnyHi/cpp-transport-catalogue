@@ -9,17 +9,12 @@ namespace get_stat {
             const transport::BusRoute* bus_route = catalogue.GetBusRoute(bus_name);
 
             if (bus_route) {
-                std::unordered_set<std::string_view> unique_stops;
-                for (const transport::Stop* stop : bus_route->stops) {
-                    unique_stops.insert(stop->name);
-                }
-
-                double route_length = catalogue.GetRouteLength(*bus_route);
-
+                //Реализовал вывод информации через новый метод получения информации о маршруте
+                const transport::InfoRoute info_route = catalogue.GetInfoRoute(bus_route);
                 output << "Bus " << bus_name << ": "
                     << bus_route->stops.size() << " stops on route, "
-                    << unique_stops.size() << " unique stops, "
-                    << route_length << " route length" << std::endl;
+                    << info_route.count_unique_stops << " unique stops, "
+                    << info_route.length << " route length" << std::endl;
             }
             else {
                 output << "Bus " << bus_name << ": not found" << std::endl;

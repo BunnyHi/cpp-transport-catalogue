@@ -112,8 +112,7 @@ namespace input {
             if (command.command == "Bus") {
                 bool is_circular = command.description.find('>') != std::string::npos;
                 std::vector<std::string_view> stop_names = ParseRoute(command.description);
-                std::vector<std::string> stops(stop_names.begin(), stop_names.end());
-                catalogue.AddBusRoute(command.id, stops, is_circular);
+                catalogue.AddBusRoute(command.id, stop_names, is_circular);
             }
         }
     }
