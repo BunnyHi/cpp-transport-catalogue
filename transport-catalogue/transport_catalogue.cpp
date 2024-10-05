@@ -8,54 +8,60 @@ namespace transport {
     }
 
     void TransportCatalogue::AddStop(std::string_view stop_name, Coordinates coords) {
-        Stop stop = { std::string(stop_name), coords };
+        stop_buses_.push_back(std::string(stop_name));
+
+        std::string_view saved_stop_name = stop_buses_.back();
+
+        Stop stop = { std::string(saved_stop_name), coords };
+
         Stop& stop_ref = stops_.emplace_back(std::move(stop));
 
-        stop_names_.emplace(stop_ref.name, stop_ref);
+        stop_names_.emplace(saved_stop_name, &stop_ref);
 
-        stop_to_buses_[stop_ref.name];
+        stop_to_buses_[saved_stop_name];
     }
 
     void TransportCatalogue::AddBusRoute(std::string_view route_name, const std::vector<std::string_view>& stop_names, bool is_circular) {
+        stop_buses_.push_back(std::string(route_name));
+        std::string_view saved_route_name = stop_buses_.back();
         std::vector<Stop*> route_stops;
-        for (std::string_view stop_name : stop_names) {
-            Stop* stop = &stop_names_.at(stop_name);
-            route_stops.push_back(stop);
 
-            stop_to_buses_[stop->name].insert(std::string(route_name));
+        for (std::string_view stop_name : stop_names) {
+            Stop* stop = stop_names_.at(stop_name);
+            route_stops.push_back(stop);
+            stop_buses_.push_back(std::string(stop_name));
+            std::string_view saved_stop_name = stop_buses_.back();
+            stop_to_buses_[saved_stop_name].insert(saved_route_name);
         }
 
-        BusRoute bus_route = { std::string(route_name), route_stops, is_circular };
+        BusRoute bus_route = { std::string(saved_route_name), route_stops, is_circular };
+
         BusRoute& bus_route_ref = buses_.emplace_back(std::move(bus_route));
 
-        bus_routes_.emplace(bus_route_ref.name, bus_route_ref);
+        bus_routes_.emplace(saved_route_name, &bus_route_ref);
     }
 
     const BusRoute* TransportCatalogue::GetBusRoute(std::string_view route_name) const {
         auto it = bus_routes_.find(route_name);
-        return it != bus_routes_.end() ? &it->second : nullptr;
+        return it != bus_routes_.end() ? it->second : nullptr;
     }
 
     const Stop* TransportCatalogue::GetStop(std::string_view stop_name) const {
         auto it = stop_names_.find(stop_name);
-        return it != stop_names_.end() ? &it->second : nullptr;
+        return it != stop_names_.end() ? it->second : nullptr;
     }
 
     std::vector<std::string_view> TransportCatalogue::GetBusesByStop(std::string_view stop_name) const {
-        auto it = stop_to_buses_.find(stop_name);
-        if (it == stop_to_buses_.end()) {
+        if (stop_to_buses_.count(stop_name) == 0) {
             return {};
         }
 
-        const auto& buses = it->second;
+        const auto& buses = stop_to_buses_.at(stop_name);
         std::vector<std::string_view> result(buses.begin(), buses.end());
-
-        std::sort(result.begin(), result.end());
 
         return result;
     }
 
-    // Метод получения информации о маршруте
     const InfoRoute TransportCatalogue::GetInfoRoute(const BusRoute* bus_route) const {
         InfoRoute info_route;
         info_route.name = bus_route->name;
@@ -70,8 +76,6 @@ namespace transport {
 
         return info_route;
     }
-
-
 
     double TransportCatalogue::GetRouteLength(const BusRoute& bus_route) const {
         double total_length = 0.0;
