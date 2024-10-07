@@ -65,7 +65,6 @@ namespace transport {
     private:
         std::deque<Stop> stops_;
         std::deque<BusRoute> buses_;
-        std::deque<std::string> stop_buses_;
 
         std::unordered_map<std::string_view, Stop*> stop_names_;
         std::unordered_map<std::string_view, BusRoute*> bus_routes_;

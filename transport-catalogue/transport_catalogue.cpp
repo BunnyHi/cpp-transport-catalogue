@@ -8,37 +8,27 @@ namespace transport {
     }
 
     void TransportCatalogue::AddStop(std::string_view stop_name, Coordinates coords) {
-        stop_buses_.push_back(std::string(stop_name));
+        Stop& stop_ref = stops_.emplace_back(Stop{ std::string(stop_name), coords });
 
-        std::string_view saved_stop_name = stop_buses_.back();
+        stop_names_.emplace(stop_ref.name, &stop_ref);
 
-        Stop stop = { std::string(saved_stop_name), coords };
-
-        Stop& stop_ref = stops_.emplace_back(std::move(stop));
-
-        stop_names_.emplace(saved_stop_name, &stop_ref);
-
-        stop_to_buses_[saved_stop_name];
+        stop_to_buses_[stop_ref.name];
     }
 
     void TransportCatalogue::AddBusRoute(std::string_view route_name, const std::vector<std::string_view>& stop_names, bool is_circular) {
-        stop_buses_.push_back(std::string(route_name));
-        std::string_view saved_route_name = stop_buses_.back();
+        BusRoute& bus_route_ref = buses_.emplace_back(BusRoute{ std::string(route_name), {}, is_circular });
         std::vector<Stop*> route_stops;
 
         for (std::string_view stop_name : stop_names) {
             Stop* stop = stop_names_.at(stop_name);
             route_stops.push_back(stop);
-            stop_buses_.push_back(std::string(stop_name));
-            std::string_view saved_stop_name = stop_buses_.back();
-            stop_to_buses_[saved_stop_name].insert(saved_route_name);
+
+            stop_to_buses_[stop->name].insert(bus_route_ref.name);
         }
 
-        BusRoute bus_route = { std::string(saved_route_name), route_stops, is_circular };
+        bus_route_ref.stops = std::move(route_stops);
 
-        BusRoute& bus_route_ref = buses_.emplace_back(std::move(bus_route));
-
-        bus_routes_.emplace(saved_route_name, &bus_route_ref);
+        bus_routes_.emplace(bus_route_ref.name, &bus_route_ref);
     }
 
     const BusRoute* TransportCatalogue::GetBusRoute(std::string_view route_name) const {
