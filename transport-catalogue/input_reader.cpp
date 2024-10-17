@@ -2,9 +2,6 @@
 
 namespace input {
 
-    /**
-     * Парсит строку вида "10.123,  -30.1837" и возвращает пару координат (широта, долгота)
-     */
     Coordinates ParseCoordinates(std::string_view str) {
         static const double nan = std::nan("");
 
@@ -23,9 +20,6 @@ namespace input {
         return { lat, lng };
     }
 
-    /**
-     * Удаляет пробелы в начале и конце строки
-     */
     std::string_view Trim(std::string_view string) {
         const auto start = string.find_first_not_of(' ');
         if (start == string.npos) {
@@ -34,9 +28,6 @@ namespace input {
         return string.substr(start, string.find_last_not_of(' ') + 1 - start);
     }
 
-    /**
-     * Разбивает строку string на n строк, с помощью указанного символа-разделителя delim
-     */
     std::vector<std::string_view> Split(std::string_view string, char delim) {
         std::vector<std::string_view> result;
 
@@ -55,11 +46,6 @@ namespace input {
         return result;
     }
 
-    /**
-     * Парсит маршрут.
-     * Для кольцевого маршрута (A>B>C>A) возвращает массив названий остановок [A,B,C,A]
-     * Для некольцевого маршрута (A-B-C-D) возвращает массив названий остановок [A,B,C,D,C,B,A]
-     */
     std::vector<std::string_view> ParseRoute(std::string_view route) {
         if (route.find('>') != route.npos) {
             return Split(route, '>');
@@ -100,6 +86,28 @@ namespace input {
         }
     }
 
+    void ParseStopDistances(std::string_view str, transport::TransportCatalogue& catalogue, const transport::Stop* from_stop) {
+        size_t pos = 0;
+        while (pos != std::string_view::npos) {
+            pos = str.find("m to", pos);
+            if (pos == std::string_view::npos) break;
+
+            size_t distance_start = str.rfind(' ', pos - 2);
+            double distance = std::stod(std::string(str.substr(distance_start + 1, pos - distance_start - 1)));
+
+            pos += 5;
+            size_t stop_end = str.find(',', pos);
+            std::string_view stop_name = str.substr(pos, stop_end - pos);
+
+            const transport::Stop* to_stop = catalogue.GetStop(stop_name);
+            if (to_stop) {
+                catalogue.SetDistance(from_stop, to_stop, distance);
+            }
+
+            pos = stop_end;
+        }
+    }
+
     void InputReader::ApplyCommands(transport::TransportCatalogue& catalogue) const {
         for (const auto& command : commands_) {
             if (command.command == "Stop") {
@@ -109,8 +117,20 @@ namespace input {
         }
 
         for (const auto& command : commands_) {
+            if (command.command == "Stop") {
+                const transport::Stop* stop = catalogue.GetStop(command.id);
+                if (stop) {
+                    auto stop_data_pos = command.description.find(',');
+                    if (stop_data_pos != std::string::npos) {
+                        ParseStopDistances(command.description.substr(stop_data_pos + 1), catalogue, stop);
+                    }
+                }
+            }
+        }
+
+        for (const auto& command : commands_) {
             if (command.command == "Bus") {
-                bool is_circular = command.description.find('>') != std::string::npos;
+                bool is_circular = command.description.find('>') != std::string_view::npos;
                 std::vector<std::string_view> stop_names = ParseRoute(command.description);
                 catalogue.AddBusRoute(command.id, stop_names, is_circular);
             }

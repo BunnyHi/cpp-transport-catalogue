@@ -2,9 +2,10 @@
 
 namespace transport {
 
-    //Хэшер для хранения в deque
-    size_t StopsHasher::operator()(const std::pair<const Stop*, const Stop*> stops) const {
-        return hasher(stops.first->name) + 37 * hasher(stops.second->name);
+    size_t StopsHasher::operator()(const std::pair<const Stop*, const Stop*>& stops) const {
+        std::hash<const void*> ptr_hasher;
+        return ptr_hasher(static_cast<const void*>(stops.first))
+            + 37 * ptr_hasher(static_cast<const void*>(stops.second));
     }
 
     void TransportCatalogue::AddStop(std::string_view stop_name, Coordinates coords) {
@@ -49,6 +50,8 @@ namespace transport {
         const auto& buses = stop_to_buses_.at(stop_name);
         std::vector<std::string_view> result(buses.begin(), buses.end());
 
+        std::sort(result.begin(), result.end());
+
         return result;
     }
 
@@ -56,6 +59,15 @@ namespace transport {
         InfoRoute info_route;
         info_route.name = bus_route->name;
         info_route.length = GetRouteLength(*bus_route);
+
+        double geo_length = 0.0;
+        for (size_t i = 1; i < bus_route->stops.size(); ++i) {
+            const Stop* prev_stop = bus_route->stops[i - 1];
+            const Stop* current_stop = bus_route->stops[i];
+
+            geo_length += ComputeDistance(prev_stop->coordinates, current_stop->coordinates);
+        }
+        info_route.curvature = info_route.length / geo_length;
 
         std::unordered_set<std::string_view> unique_stops;
         for (const Stop* stop : bus_route->stops) {
@@ -73,10 +85,25 @@ namespace transport {
         for (size_t i = 1; i < bus_route.stops.size(); ++i) {
             const Stop* prev_stop = bus_route.stops[i - 1];
             const Stop* current_stop = bus_route.stops[i];
-            total_length += ComputeDistance(prev_stop->coordinates, current_stop->coordinates);
+
+            total_length += GetDistance(prev_stop, current_stop);
         }
 
         return total_length;
+    }
+
+    void TransportCatalogue::SetDistance(const Stop* from, const Stop* to, double distance) {
+        distances_[{from, to}] = distance;
+    }
+
+    double TransportCatalogue::GetDistance(const Stop* from, const Stop* to) const {
+        if (distances_.count({ from, to })) {
+            return distances_.at({ from, to });
+        }
+        if (distances_.count({ to, from })) {
+            return distances_.at({ to, from });
+        }
+        return 0.0;
     }
 
 } // namespace transport

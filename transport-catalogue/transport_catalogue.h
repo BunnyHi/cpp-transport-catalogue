@@ -27,19 +27,15 @@ namespace transport {
         bool is_circular;
     };
 
-    // Структура информации о маршруте
     struct InfoRoute {
         std::string name;
         int count_unique_stops;
         double length;
+        double curvature;
     };
 
     struct StopsHasher {
-
-        size_t operator()(const std::pair<const Stop*, const Stop*> stops) const;
-
-    private:
-        std::hash<std::string_view> hasher;
+        size_t operator()(const std::pair<const Stop*, const Stop*>& stops) const;
     };
 
     class TransportCatalogue {
@@ -62,6 +58,12 @@ namespace transport {
         // Метод получения информации о маршруте
         const InfoRoute GetInfoRoute(const BusRoute*) const;
 
+        // Метод для добавления расстояния между остановками
+        void SetDistance(const Stop* from, const Stop* to, double distance);
+
+        // Метод для получения расстояния между остановками
+        double GetDistance(const Stop* from, const Stop* to) const;
+
     private:
         std::deque<Stop> stops_;
         std::deque<BusRoute> buses_;
@@ -69,6 +71,7 @@ namespace transport {
         std::unordered_map<std::string_view, Stop*> stop_names_;
         std::unordered_map<std::string_view, BusRoute*> bus_routes_;
         std::unordered_map<std::string_view, std::unordered_set<std::string_view>> stop_to_buses_;
+        std::unordered_map<std::pair<const Stop*, const Stop*>, double, StopsHasher> distances_;
 
         // Метод для расчёта длины маршрута
         double GetRouteLength(const BusRoute& bus_route) const;
