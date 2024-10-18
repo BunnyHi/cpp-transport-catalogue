@@ -97,11 +97,13 @@ namespace transport {
     }
 
     double TransportCatalogue::GetDistance(const Stop* from, const Stop* to) const {
-        if (distances_.count({ from, to })) {
-            return distances_.at({ from, to });
+        auto it = distances_.find({ from, to });
+        if (it != distances_.end()) {
+            return it->second;
         }
-        if (distances_.count({ to, from })) {
-            return distances_.at({ to, from });
+        it = distances_.find({ to, from });
+        if (it != distances_.end()) {
+            return it->second;
         }
         return 0.0;
     }
