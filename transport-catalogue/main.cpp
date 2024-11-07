@@ -1,32 +1,29 @@
 #include <iostream>
-#include <string>
-
-#include "input_reader.h"
-#include "stat_reader.h"
-
-using namespace std;
+#include "json.h"
+#include "json_reader.h"
+#include "request_handler.h"
+#include "transport_catalogue.h"
+#include "map_renderer.h"
 
 int main() {
+
     transport::TransportCatalogue catalogue;
+    json::Document doc = json::Load(std::cin);
+    const auto& root = doc.GetRoot().AsMap();
 
-    int base_request_count;
-    cin >> base_request_count >> ws;
+    const auto& base_requests = root.at("base_requests").AsArray();
+    json_reader::ParseBaseRequests(catalogue, base_requests);
 
-    {
-        input::InputReader reader;
-        for (int i = 0; i < base_request_count; ++i) {
-            string line;
-            getline(cin, line);
-            reader.ParseLine(line);
-        }
-        reader.ApplyCommands(catalogue);
-    }
+    const auto& render_settings = root.at("render_settings").AsMap();
+    const auto& render = json_reader::ParseRenderSettings(render_settings);
 
-    int stat_request_count;
-    cin >> stat_request_count >> ws;
-    for (int i = 0; i < stat_request_count; ++i) {
-        string line;
-        getline(cin, line);
-        get_stat::ParseAndPrintStat(catalogue, line, cout);
-    }
+    map::MapRenderer map_renderer(render, catalogue);
+
+    const auto& stat_requests = root.at("stat_requests").AsArray();
+    request_handler::RequestHandler rh(map_renderer);
+
+    json::Array responses = rh.ParseStatRequests(catalogue, stat_requests, map_renderer);
+    json::Document response_doc{ std::move(responses) };
+    json::Print(response_doc, std::cout);
+
 }
