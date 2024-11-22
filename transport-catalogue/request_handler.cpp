@@ -3,69 +3,76 @@
 namespace request_handler {
 
     json::Dict RequestHandler::ParseStopRequest(const transport::TransportCatalogue& catalogue, const json::Dict& request_map) {
-        json::Dict response;
-        response["request_id"] = request_map.at("id").AsInt();
+        json::Builder builder;
+        builder.StartDict()
+            .Key("request_id").Value(request_map.at("id").AsInt());
+
         const std::string& stop_name = request_map.at("name").AsString();
         if (catalogue.StopExists(stop_name)) {
             if (const auto stop_info = catalogue.GetStopInfo(stop_name)) {
-                json::Array buses;
+                builder.Key("buses").StartArray();
                 for (const std::string& bus_name : stop_info->buses) {
-                    buses.push_back(json::Node{ bus_name });
+                    builder.Value(bus_name);
                 }
-                response["buses"] = json::Node{ buses };
+                builder.EndArray();
             }
         }
         else {
-            response["error_message"] = "not found";
+            builder.Key("error_message").Value("not found");
         }
-        return response;
+        return builder.Build().AsMap();
     }
 
     json::Dict RequestHandler::ParseBusRequest(const transport::TransportCatalogue& catalogue, const json::Dict& request_map) {
-        json::Dict response;
-        response["request_id"] = request_map.at("id").AsInt();
+        json::Builder builder;
+        builder.StartDict()
+            .Key("request_id").Value(request_map.at("id").AsInt());
+
         const std::string& bus_name = request_map.at("name").AsString();
         if (const auto bus_info = catalogue.GetBusInfo(bus_name)) {
-            response["curvature"] = bus_info->curvature;
-            response["route_length"] = bus_info->length;
-            response["stop_count"] = static_cast<int>(bus_info->stops_count);
-            response["unique_stop_count"] = static_cast<int>(bus_info->unique_stops_count);
+            builder.Key("curvature").Value(bus_info->curvature);
+            builder.Key("route_length").Value(bus_info->length);
+            builder.Key("stop_count").Value(static_cast<int>(bus_info->stops_count));
+            builder.Key("unique_stop_count").Value(static_cast<int>(bus_info->unique_stops_count));
         }
         else {
-            response["error_message"] = "not found";
+            builder.Key("error_message").Value("not found");
         }
-        return response;
+        return builder.Build().AsMap();
     }
 
     json::Dict RequestHandler::ParseMapRequest(const json::Dict& request_map, map::MapRenderer& map_renderer) {
-        json::Dict response;
-        response["request_id"] = request_map.at("id").AsInt();
+        json::Builder builder;
+        builder.StartDict()
+            .Key("request_id").Value(request_map.at("id").AsInt());
 
         std::ostringstream svg_stream;
         svg::Document map = map_renderer.RenderMap();
         map.Render(svg_stream);
 
-        response["map"] = svg_stream.str();
+        builder.Key("map").Value(svg_stream.str());
 
-        return response;
+        return builder.Build().AsMap();
     }
 
     json::Array RequestHandler::ParseStatRequests(const transport::TransportCatalogue& catalogue, const json::Array& stat_requests, map::MapRenderer& map_renderer) {
-        json::Array responses;
+        json::Builder builder;
+        builder.StartArray();
         for (const auto& request : stat_requests) {
             const auto& request_map = request.AsMap();
             const auto& type = request_map.at("type").AsString();
             if (type == "Stop") {
-                responses.push_back(ParseStopRequest(catalogue, request_map));
+                builder.Value(ParseStopRequest(catalogue, request_map));
             }
             else if (type == "Bus") {
-                responses.push_back(ParseBusRequest(catalogue, request_map));
+                builder.Value(ParseBusRequest(catalogue, request_map));
             }
             else if (type == "Map") {
-                responses.push_back(ParseMapRequest(request_map, map_renderer));
+                builder.Value(ParseMapRequest(request_map, map_renderer));
             }
         }
-        return responses;
+        builder.EndArray();
+        return builder.Build().AsArray();
     }
 
-}
+} // namespace request_handler

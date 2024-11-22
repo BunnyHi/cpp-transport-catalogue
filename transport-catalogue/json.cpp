@@ -274,6 +274,10 @@ namespace json {
         return value_;
     }
 
+    Node::Value& Node::GetValue() {
+        return value_;
+    }
+
     bool Node::operator==(const Node& rhs) const {
         return value_ == rhs.value_;
     }

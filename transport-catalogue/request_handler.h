@@ -4,6 +4,7 @@
 #include "json.h"
 #include "domain.h"
 #include "map_renderer.h"
+#include "json_builder.h"
 #include <sstream>
 
 
