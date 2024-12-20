@@ -109,4 +109,10 @@ namespace json_reader {
         return settings;
     }
 
+    transport::Router ParseRouterSettings(const json::Dict& settings) {
+        transport::Router routing_settings;
+
+        return transport::Router{ settings.at("bus_wait_time").AsInt(), settings.at("bus_velocity").AsDouble() };
+    }
+
 } // namespace json_reader

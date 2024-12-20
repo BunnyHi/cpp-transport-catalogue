@@ -32,7 +32,7 @@ namespace json {
     Builder::DictContext Builder::StartDict() {
         auto* top_node = nodes_stack_.back();
         if (top_node->IsMap()) {
-            CreateNewContainerInDict(top_node, false); 
+            CreateNewContainerInDict(top_node, false);
         }
         else if (top_node->IsArray()) {
             CreateNewContainerInArray(top_node, false);
@@ -49,7 +49,7 @@ namespace json {
     Builder::ArrayContext Builder::StartArray() {
         auto* top_node = nodes_stack_.back();
         if (top_node->IsMap()) {
-            CreateNewContainerInDict(top_node, true); 
+            CreateNewContainerInDict(top_node, true);
         }
         else if (top_node->IsArray()) {
             CreateNewContainerInArray(top_node, true);

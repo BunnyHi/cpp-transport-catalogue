@@ -24,12 +24,14 @@ namespace json {
 
         Node()
             : value_(nullptr)
-        {}
+        {
+        }
 
         template<typename ValueType>
         Node(ValueType value)
             : value_(std::move(value))
-        {}
+        {
+        }
 
 
         bool IsInt() const;

@@ -79,7 +79,7 @@ namespace map {
 
             if (color_num < (render_settings_.color_palette.size() - 1)) {
                 ++color_num;
-            } 
+            }
             else {
                 color_num = 0;
             }
@@ -101,7 +101,7 @@ namespace map {
 
             const auto& first_stop_coords = sphere_projector(route->stops[0]->coords);
             AddRouteName(route_names, route, first_stop_coords, color_num);
-            
+
             if (route->is_circular == false && route->stops[0] != route->stops[route->stops.size() - 1]) {
                 const auto& last_stop_coords = sphere_projector(route->stops[route->stops.size() - 1]->coords);
                 AddRouteName(route_names, route, last_stop_coords, color_num);

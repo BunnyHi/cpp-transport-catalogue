@@ -93,7 +93,8 @@ namespace map {
             const transport::TransportCatalogue& catalogue)
             : render_settings_(render_settings),
             catalogue_(catalogue)
-            {}
+        {
+        }
 
         svg::Document RenderMap() const;
 
@@ -101,7 +102,7 @@ namespace map {
 
         const RenderSettings render_settings_;
         const transport::TransportCatalogue& catalogue_;
-        
+
 
         svg::Document CreateSVGDocument(const std::map<std::string_view, const transport::BusRoute*>& sorted_bus, const std::map<std::string_view, const transport::Stop*> sorted_stops) const;
 

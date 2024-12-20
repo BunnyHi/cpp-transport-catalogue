@@ -83,6 +83,14 @@ namespace transport {
         return sorted_buses;
     }
 
+    std::map<std::string_view, const Stop*> TransportCatalogue::GetSortedStops() const {
+        std::map<std::string_view, const Stop*> sorted_stops;
+        for (const auto& stop : stop_names_) {
+            sorted_stops.emplace(stop);
+        }
+        return sorted_stops;
+    }
+
     std::optional<InfoStop> TransportCatalogue::GetStopInfo(std::string_view stop_name) const {
         auto it = stop_to_buses_.find(stop_name);
         InfoStop info;
@@ -100,7 +108,7 @@ namespace transport {
     }
 
     std::optional<InfoRoute> TransportCatalogue::GetBusInfo(std::string_view bus_name) const {
-        InfoRoute info = {0, 0, 0.0, 0.0, false};
+        InfoRoute info = { 0, 0, 0.0, 0.0, false };
         auto it = bus_routes_.find(bus_name);
         if (it != bus_routes_.end()) {
             const BusRoute& route = *(it->second);

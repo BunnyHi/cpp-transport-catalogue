@@ -31,6 +31,7 @@ namespace transport {
         std::vector<std::string> GetBusesByStop(std::string_view stop_name) const;
         void SetRoadDistance(const Stop* stopA, const Stop* stopB, double distance);
         std::map<std::string_view, const BusRoute*> GetSortedBuses() const;
+        std::map<std::string_view, const Stop*> GetSortedStops() const;
         std::optional <InfoStop> GetStopInfo(std::string_view stop_name) const;
         std::optional <InfoRoute> GetBusInfo(std::string_view bus_name) const;
         double GetDistance(const Stop* from, const Stop* to) const;
@@ -38,7 +39,7 @@ namespace transport {
     private:
         std::deque<Stop> stops_;
         std::deque<BusRoute> buses_;
-        
+
         using StopMap = std::unordered_map<std::string_view, Stop*>;
         using BusRouteMap = std::unordered_map<std::string_view, BusRoute*>;
         using BusRouteMapOneTrip = std::unordered_map<std::string_view, BusRoute*>;
@@ -49,7 +50,7 @@ namespace transport {
         BusRouteMap bus_routes_;
         StopsMap stop_to_buses_;
         DistanceMap distances_;
-        
+
     };
 
 }// namespace transport

@@ -55,7 +55,45 @@ namespace request_handler {
         return builder.Build().AsMap();
     }
 
-    json::Array RequestHandler::ParseStatRequests(const transport::TransportCatalogue& catalogue, const json::Array& stat_requests, map::MapRenderer& map_renderer) {
+    json::Dict RequestHandler::ParseRouterRequest(const json::Dict& stat_requests, const transport::Router& router) {
+        json::Builder builder;
+        builder.StartDict()
+            .Key("request_id").Value(stat_requests.at("id").AsInt());
+
+        const std::string_view stop_from = stat_requests.at("from").AsString();
+        const std::string_view stop_to = stat_requests.at("to").AsString();
+
+        const auto routing = router.FindRoute(stop_from, stop_to);
+
+        if (!routing) {
+            builder.Key("error_message").Value("not found");
+        }
+        else {
+            builder.Key("total_time").Value(routing->total_time);
+            json::Array items;
+
+            items.reserve(routing->items.size());
+            for (const auto& item : routing->items) {
+                json::Dict route_item;
+                route_item["stop_name"] = item.stop_name;
+                route_item["time"] = item.time;
+                route_item["type"] = item.type;
+
+                if (item.type == "Bus") {
+                    route_item["bus"] = item.bus_name;
+                    route_item["span_count"] = item.span_count;
+                }
+
+                items.emplace_back(std::move(route_item));
+            }
+
+            builder.Key("items").Value(items);
+        }
+
+        return builder.Build().AsMap();
+    }
+
+    json::Array RequestHandler::ParseStatRequests(const transport::TransportCatalogue& catalogue, const json::Array& stat_requests, map::MapRenderer& map_renderer, const transport::Router& router) {
         json::Builder builder;
         builder.StartArray();
         for (const auto& request : stat_requests) {
@@ -69,6 +107,9 @@ namespace request_handler {
             }
             else if (type == "Map") {
                 builder.Value(ParseMapRequest(request_map, map_renderer));
+            }
+            else if (type == "Route") {
+                builder.Value(ParseRouterRequest(request_map, router));
             }
         }
         builder.EndArray();
